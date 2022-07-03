@@ -1,0 +1,107 @@
+windows:
+  -
+    name: win0
+    type: layout
+    orientation: vert
+    children:
+      -
+        name: upper_half
+        type: layout
+        orientation: horiz
+        children:
+          -
+          # wtf zasto ovo ne radi? prikazuje neku levu sliku? zato sto ga crtas iz mejna
+            name: src
+            type: image
+            src: data/l2.jpg
+          -
+            name: upper_rigth_corner
+            type: layout
+            orientation: vert
+            children:
+              -
+                name: th_start_h0
+                type: slider
+                max: 180
+                orientation: horiz
+              -
+                name: th_stop_h0
+                type: slider
+                max: 180
+                orientation: horiz
+              -
+                name: th_start_h1
+                type: slider
+                max: 180
+                orientation: horiz
+              -
+                name: th_stop_h1
+                type: slider
+                max: 180
+                orientation: horiz
+              -
+                name: th_start_s
+                type: slider
+                max: 255
+                orientation: horiz
+              -
+                name: th_stop_s
+                type: slider
+                max: 255
+                orientation: horiz
+              -
+                name: th_start_v
+                type: slider
+                max: 255
+                orientation: horiz
+              -
+                name: th_stop_v
+                type: slider
+                max: 255
+                orientation: horiz
+              -
+                name: th_stop_v
+                type: slider
+                max: 255
+                orientation: horiz
+      -
+        name: lower_half
+        type: tab
+        children:
+          -
+            name: hsv
+            type: layout
+            orientation: horiz
+            children:
+              -
+                name: h
+                type: image
+                src: data/1l.jpg
+              -
+                name: s
+                type: image
+                src: data/2l.jpg
+              -
+                name: v
+                type: image
+                src: data/3l.jpg
+          -
+            name: rgb
+            type: layout
+            orientation: horiz
+            children:
+              -
+                name: r
+                type: image
+                src: data/3l.jpg
+              -
+                name: g
+                type: image
+                src: data/2l.jpg
+              -
+                name: b
+                type: image
+              - 
+               name: h
+               type: image
+               src: data/1l.jpg

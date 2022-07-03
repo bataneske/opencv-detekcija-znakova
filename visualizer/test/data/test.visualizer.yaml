@@ -1,0 +1,90 @@
+windows:
+  -
+    name: win0
+    type: vert
+    children:
+      -
+        name: upper_half
+        type: horiz
+        children:
+          -
+            name: src
+            type: image
+          -
+            name: hist
+            type: plot
+            ylimit: [0, 1000]
+          -
+            name: upper_rigth_corner
+            type: vert
+            children:
+              -
+                name: th_start_h0
+                type: slider
+                max: 180
+                orientation: horiz
+              -
+                name: th_stop_h0
+                type: slider
+                max: 180
+                orientation: horiz
+              -
+                name: th_start_h1
+                type: slider
+                max: 180
+                orientation: horiz
+              -
+                name: th_stop_h1
+                type: slider
+                max: 180
+                orientation: horiz
+              -
+                name: th_start_s
+                type: slider
+                max: 255
+                orientation: horiz
+              -
+                name: th_stop_s
+                type: slider
+                max: 255
+                orientation: horiz
+              -
+                name: th_start_v
+                type: slider
+                max: 255
+                orientation: horiz
+              -
+                name: th_stop_v
+                type: slider
+                max: 255
+                orientation: horiz
+      -
+        name: lower_half
+        type: tab
+        children:
+          -
+            name: hsv
+            type: horiz
+            children:
+              -
+                name: h
+                type: image
+              -
+                name: s
+                type: image
+              -
+                name: v
+                type: image
+          -
+            name: rgb
+            type: horiz
+            children:
+              -
+                name: r
+                type: image
+              -
+                name: g
+                type: image
+              -
+                name: b
+                type: image
