@@ -10,13 +10,14 @@ using namespace std;
 #include <unistd.h>
 
 #define DEBUG(x) do{ std::cout << #x << " = " << x << std::endl; }while(0)
-#define threshold 30
+#define threshold 20 // TODO: replace threshold with slider values.
 
 #include "opencv2/opencv.hpp"
 using namespace cv;
 
-void hsv_to_panels(Mat3b hsv_img)
-{/*
+// HSV to H, S and V displays:
+/*void hsv_to_panels(Mat3b hsv_img)
+{
 	Mat3b H(hsv_img.size(), hsv_img.type()), S(hsv_img.size(), hsv_img.type()), V(hsv_img.size(), hsv_img.type());
 	for(uint16_t i = 0; i < hsv_img.rows; i++)
 	{
@@ -44,7 +45,7 @@ void hsv_to_panels(Mat3b hsv_img)
 			"v",
 			V
 		);
-*/}
+}*/
 
 int main() {
 	Mat src = cv::imread("data/stop_sign.jpg");
@@ -61,20 +62,32 @@ int main() {
 	static uint8_t pix[width*height*3];
 
 	// BGR to HSV:
-	Mat3b src2hsv;
-	cvtColor(src2, src2hsv, COLOR_BGR2HSV);
+	Mat3b hsv_img;
+	Mat resultHSV, maskHSV;
+	cvtColor(src, hsv_img, COLOR_BGR2HSV);
+
+	Vec3b pixel(30, 28, 148); // BGR red pixel.
+
+	Scalar minHSV = Scalar(pixel.val[0] - threshold, pixel.val[1] - threshold, pixel.val[2] - threshold); // TODO: replace threshold with slider values.
+	Scalar maxHSV = Scalar(pixel.val[0] + threshold, pixel.val[1] + threshold, pixel.val[2] + threshold); // TODO: replace threshold with slider values.
+
+	inRange(hsv_img, minHSV, maxHSV, maskHSV);
+	bitwise_and(hsv_img, hsv_img, resultHSV, maskHSV);
+
+	cvtColor(resultHSV, src, COLOR_HSV2BGR);
+
 
 	cout << "DEBUG _ _ _ _ _ _ _ _ _ 3" << endl;
-	//HSV to H, S and V displays:
-	hsv_to_panels(src2hsv);
+
+	//hsv_to_panels(hsv_img);
 
 	cout << "DEBUG _ _ _ _ _ _ _ _ _ 4" << endl;
-	/*visualizer::img::show(
+	visualizer::img::show(
 		"src",
 		src
 	);
 
-	visualizer::img::show(
+	/*visualizer::img::show(
 		"h",
 		src
 	);
