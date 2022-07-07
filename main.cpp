@@ -13,7 +13,7 @@ using namespace cv;
 int hl1=0, hh1=14, hl2=160, hh2=179, sl=120, sh=255, vl=74, vh=218; // thresholds for RED, set as starting slider positions
 int cl=0, ch=0; 		// Canny parameters slider positions
 int dw=5; 				// dilation width slider position
-int ath=5000; 			// threshold for recognising area as contour, also has a slider
+int ath=8000; 			// threshold for recognising area as contour, also has a slider
 
 void sliders()
 {
@@ -42,7 +42,7 @@ void getCountours(Mat src, Mat imgDil, Mat img)
 	vector<Vec4i> hierarchy;
 
 	findContours(imgDil, contours, hierarchy, RETR_EXTERNAL, CHAIN_APPROX_SIMPLE);
-	//drawContours(img, contours, -1, Scalar(255, 0, 255), 2);
+
 
 	Mat maskHSV, maskHSV1, maskHSV2;
 	vector<vector<Point>> contPoly(contours.size());
@@ -50,13 +50,18 @@ void getCountours(Mat src, Mat imgDil, Mat img)
 	vector<Mat> imgsCropped;
 	string objectType;
 	Mat warpMatrix, signWarped;
+	Mat fg, bg;
+	Mat bgmsk = Mat::zeros(src.rows, src.cols, CV_8UC1);
+
 
 	for(int i = 0; i < contours.size(); i++)
 	{
+		cout << contours.size() << " contours found" << endl;
 		int area = contourArea(contours[i]);
 		//cout << area << endl;
 
-		Mat signCropped, signCroppedHSV, signColored, signCroppedResized, signColoredResized;
+		drawContours(img, contours, i, Scalar(112, 67, 255), 2);
+		Mat signCropped, signColored, signColoredHSV, signCroppedResized;
 		if(area > ath)
 		{
 			float peri = arcLength(contours[i], true);
@@ -67,55 +72,78 @@ void getCountours(Mat src, Mat imgDil, Mat img)
 			// ovde kropujem, bojim, ubacujem u neki vektor
 			Rect roi(boundRect[i].tl(), boundRect[i].br());
 
-
-			// TAG : iseci visak slike
-
-			// znaci imas signColored koji je BGR i imas signCropped koji je HSV
-			// na signCropped ces traziti boje  ( tako sto maskiras sa opsegom za neku boju )
-			// na signColored ces crtati ( tako sto sve delove koji pripadaju maski obojas tom bojom )
-			signColored = src(roi);
-			cvtColor(signColored, signCropped, COLOR_BGR2HSV);
+			signColored = src.clone();
+			cvtColor(signColored, signColoredHSV, COLOR_BGR2HSV);
 
 
 			// prodji kroz sve boje, odradi maskiranje, pa tako i farbanje
 
-			cout << "DEBUG _ _ _ _ _ _ _ _ _ 1" << endl;
-			/*
 			// TAG: Pozadina kao zasebna
+			// prvo ofarbao celu kopiju u BACKGROUND
+			/*
+			for(int r = 0; r < signColored.rows; r++)
+			{
+				for(int c = 0; c < signColored.cols; c++)
+				{
+					Vec3b & color = signColored.at<Vec3b>(r, c);
 
-			// ako bi prvo ofarbao celu kopiju u BACKGROUND, to bi bilo lakse
+					color[0] = ColorsBGR[SEGM_BACKGROUND][0];
+					color[1] = ColorsBGR[SEGM_BACKGROUND][1];
+					color[2] = ColorsBGR[SEGM_BACKGROUND][2];
 
+				}
+			}
+			*/
 			// TAG : Obojiti segmente predefinisanim bojama
 
-			for(int i = 0; i < ColorsThresholds.size(); i++)
+			for(int j = 0; j < ColorsThresholds.size(); j++)
 			{
-				inRange(signCropped, Scalar(ColorsThresholds[i][0], ColorsThresholds[i][4], ColorsThresholds[i][6]), Scalar(ColorsThresholds[i][1], ColorsThresholds[i][5], ColorsThresholds[i][7]), maskHSV1);
-				inRange(signCropped, Scalar(ColorsThresholds[i][2], ColorsThresholds[i][4], ColorsThresholds[i][6]), Scalar(ColorsThresholds[i][3], ColorsThresholds[i][5], ColorsThresholds[i][7]), maskHSV2);
-				maskHSV = maskHSV1 + maskHSV2;
-				for(int r=0; r<maskHSV.rows; r++)
+				inRange(signColoredHSV, Scalar(ColorsThresholds[j][0], ColorsThresholds[j][4], ColorsThresholds[j][6]), Scalar(ColorsThresholds[j][1], ColorsThresholds[j][5], ColorsThresholds[j][7]), maskHSV1);
+				inRange(signColoredHSV, Scalar(ColorsThresholds[j][2], ColorsThresholds[j][4], ColorsThresholds[j][6]), Scalar(ColorsThresholds[j][3], ColorsThresholds[j][5], ColorsThresholds[j][7]), maskHSV2);
+				//maskHSV = maskHSV1 + maskHSV2;
+				bitwise_or(maskHSV1, maskHSV2, maskHSV);
+
+
+				for(int r = 0; r < signColored.rows; r++)
 				{
-					for(int c=0; c<maskHSV.cols; c++)
+					for(int c = 0; c < signColored.cols; c++)
 					{
-						if(maskHSV.at<uint>(r, c) != 0)
+						if(maskHSV.at<uchar>(r,c) == 255)
 						{
-							//signColored.at<double>(r, c) = ColorsBGR[i];
-							cout << i << " " << maskHSV.at<uint>(r, c) << "       " << r << " - " << c << " "  << ColorsBGR[i] << endl;
-							//signColored.at<Vec3b>(r,c) = Scalar(ColorsBGR[i][0], ColorsBGR[i][1], ColorsBGR[i][2]);
+							Vec3b & color = signColored.at<Vec3b>(r, c);
 
-							// uklopi jednu po jednu boju u kopiju kropovane slike
-
+							color[0] = ColorsBGR[j][0];
+							color[1] = ColorsBGR[j][1];
+							color[2] = ColorsBGR[j][2];
 						}
 					}
 				}
-				cout << ColorsBGR[i] << endl;
+				//imshow(to_string(j)+"colors", signColored);
 			}
-			cout << "DEBUG _ _ _ _ _ _ _ _ _ 7" << endl;
 
-			// stavi te obojane slike u neki vektor obojanih slika
-			//imgsCropped.push_back(signColored);
+			drawContours(bgmsk, contours, i, Scalar(255,255,255), FILLED);
 
-			*/
-			cout << "DEBUG _ _ _ _ _ _ _ _ _ 8" << endl;
+			vector<Point> insidePoints;
+			findNonZero(bgmsk, insidePoints);
+
+			bgmsk = 255-bgmsk;
+			vector<Point> outsidePoints;
+			findNonZero(bgmsk, outsidePoints);
+			for(int r = 0; r < signColored.rows; r++)
+			{
+				for(int c = 0; c < signColored.cols; c++)
+				{
+					if(bgmsk.at<uchar>(r,c) == 255)
+					{
+						Vec3b & color = signColored.at<Vec3b>(r, c);
+
+						color[0] = ColorsBGR[SEGM_BACKGROUND][0];
+						color[1] = ColorsBGR[SEGM_BACKGROUND][1];
+						color[2] = ColorsBGR[SEGM_BACKGROUND][2];
+					}
+				}
+			}
+
 
 			int objCor = (int)contPoly[i].size();
 			if(objCor == 3)
@@ -143,11 +171,13 @@ void getCountours(Mat src, Mat imgDil, Mat img)
 				objectType = "None";
 			}
 
+			// TAG : iseci visak slike
+			signCropped = signColored(roi);
+
 
 			// TAG : skalirati znakove
 
 			resize(signCropped, signCroppedResized, Size(), 2, 2);
-			resize(signColored, signColoredResized, Size(), 2, 2);
 
 
 			//  TAG : transformisati zakrivljene znakove
@@ -159,14 +189,13 @@ void getCountours(Mat src, Mat imgDil, Mat img)
 			Point2f dstPoints[4] = { {0.0f, 0.0f}, {400, 0.0f}, {0.0f, 400}, {400, 400} };
 
 			warpMatrix = getPerspectiveTransform(srcPoints, dstPoints);
-			warpPerspective(signColored, signWarped, warpMatrix, Point(400, 400));
+			warpPerspective(signCropped, signWarped, warpMatrix, Point(400, 400));
 
 
-			imshow(to_string(i)+"signCropped", signCropped);
-			imshow(to_string(i)+"signColored", signColored);
+			//imshow(to_string(i)+"signColored", signColored);
+			//imshow(to_string(i)+"signCropped", signCropped);
 
 			imshow(to_string(i)+"signCroppedResized", signCroppedResized);
-			imshow(to_string(i)+"signColoredResized", signColoredResized);
 
 			imshow(to_string(i)+"signWarped", signWarped);
 
@@ -181,7 +210,7 @@ void getCountours(Mat src, Mat imgDil, Mat img)
 }
 
 int main() {
-	Mat src = cv::imread("data/stop_sign.jpg");
+	Mat src = cv::imread("data/yield2.jpg");
 	if(src.empty()){
 		throw runtime_error("Cannot open image!");
 	}
@@ -201,7 +230,7 @@ int main() {
 		inRange(imgHSV, Scalar(hl2, sl, vl), Scalar(hh2, sh, vh), maskHSV2);
 		maskHSV = maskHSV1 + maskHSV2;
 
-		GaussianBlur(maskHSV, imgBlur, Size(3,3), 3, 0);
+		GaussianBlur(maskHSV, imgBlur, Size(5,5), 3, 0);
 		Canny(imgBlur, imgCanny, cl, ch);
 		Mat kernel = getStructuringElement(MORPH_RECT, Size(dw, dw));
 		dilate(imgCanny, imgDil, kernel);
@@ -219,9 +248,9 @@ int main() {
 		//cvtColor(resultHSV, src, COLOR_HSV2BGR);
 
 		imshow("Src", src);
-		imshow("Image Mask", maskHSV);
-		imshow("Image Canny", imgCanny);
-		imshow("Image Dilated", imgDil);
+		//imshow("Image Mask", maskHSV);
+		//imshow("Image Canny", imgCanny);
+		//imshow("Image Dilated", imgDil);
 		imshow("Image Contours", imgCont);
 		waitKey(1);
 	}
@@ -270,4 +299,28 @@ int main() {
 
 	vl = (pixel.val[2] >= threshold) ? (pixel.val[2] - threshold) : 0;
 	vh = (pixel.val[2] <= (255-threshold)) ? (pixel.val[2] + threshold) : 255;
+*/
+
+/*
+cout << "1" << *maskHSV.ptr<uchar>(0) << "2"  << endl;
+
+
+imshow(to_string(j)+"OVAJ KURAC", maskHSV);
+for(int r=0; r<maskHSV.rows; r++)
+{
+	for(int c=0; c<maskHSV.cols; c++)
+	{
+		if(*maskHSV.ptr<uchar>(r*maskHSV.rows + c) != 0)
+		{
+			cout << *maskHSV.ptr<uchar>(r*maskHSV.rows + c);
+			//signColored.at<Scalar>(r, c) = ColorsBGR[j];
+			//cout << j << " " << (uchar)maskHSV.at<uchar>(r, c) << "       " << r << " - " << c << " "  << ColorsBGR[j] << endl;
+			//signColored.at<Vec3b>(r,c) = Scalar(ColorsBGR[j][0], ColorsBGR[j][1], ColorsBGR[j][2]);
+
+			// uklopi jednu po jednu boju u kopiju kropovane slike
+
+		}
+	}
+}
+//cout << ColorsBGR[j] << endl;
 */
