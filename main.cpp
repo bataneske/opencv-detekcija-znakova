@@ -15,6 +15,9 @@ int cl=0, ch=0; 		// Canny parameters slider positions
 int dw=5; 				// dilation width slider position
 int ath=8000; 			// threshold for recognising area as contour, also has a slider
 
+string filename = "sign_set.jpg";
+
+
 void sliders()
 {
 	namedWindow("Sliders", (240, 200));
@@ -77,30 +80,12 @@ void getCountours(Mat src, Mat imgDil, Mat img)
 
 
 			// prodji kroz sve boje, odradi maskiranje, pa tako i farbanje
-
-			// TAG: Pozadina kao zasebna
-			// prvo ofarbao celu kopiju u BACKGROUND
-			/*
-			for(int r = 0; r < signColored.rows; r++)
-			{
-				for(int c = 0; c < signColored.cols; c++)
-				{
-					Vec3b & color = signColored.at<Vec3b>(r, c);
-
-					color[0] = ColorsBGR[SEGM_BACKGROUND][0];
-					color[1] = ColorsBGR[SEGM_BACKGROUND][1];
-					color[2] = ColorsBGR[SEGM_BACKGROUND][2];
-
-				}
-			}
-			*/
 			// TAG : Obojiti segmente predefinisanim bojama
 
 			for(int j = 0; j < ColorsThresholds.size(); j++)
 			{
 				inRange(signColoredHSV, Scalar(ColorsThresholds[j][0], ColorsThresholds[j][4], ColorsThresholds[j][6]), Scalar(ColorsThresholds[j][1], ColorsThresholds[j][5], ColorsThresholds[j][7]), maskHSV1);
 				inRange(signColoredHSV, Scalar(ColorsThresholds[j][2], ColorsThresholds[j][4], ColorsThresholds[j][6]), Scalar(ColorsThresholds[j][3], ColorsThresholds[j][5], ColorsThresholds[j][7]), maskHSV2);
-				//maskHSV = maskHSV1 + maskHSV2;
 				bitwise_or(maskHSV1, maskHSV2, maskHSV);
 
 
@@ -121,6 +106,7 @@ void getCountours(Mat src, Mat imgDil, Mat img)
 				//imshow(to_string(j)+"colors", signColored);
 			}
 
+			// TAG: Pozadina kao zasebna
 			drawContours(bgmsk, contours, i, Scalar(255,255,255), FILLED);
 
 			vector<Point> insidePoints;
@@ -199,6 +185,9 @@ void getCountours(Mat src, Mat imgDil, Mat img)
 
 			imshow(to_string(i)+"signWarped", signWarped);
 
+			string outname = ("outs/" + to_string(i) + filename);
+			imwrite(outname, signWarped);
+
 
 			drawContours(img, contPoly, i, Scalar(255, 0, 255), 2);
 			rectangle(img, boundRect[i].tl(), boundRect[i].br(), Scalar(20, 255, 20), 4);
@@ -210,7 +199,7 @@ void getCountours(Mat src, Mat imgDil, Mat img)
 }
 
 int main() {
-	Mat src = cv::imread("data/yield2.jpg");
+	Mat src = cv::imread("data/"+filename);
 	if(src.empty()){
 		throw runtime_error("Cannot open image!");
 	}
@@ -260,67 +249,3 @@ int main() {
 
 	return 0;
 }
-
-
-//// ////   GRAVEYARD   //// ////
-/*
-	//#define threshold 34 // TODO: replace threshold with slider values.
-	Vec3b pixel(178, 207, 148); // HSV red pixel.
-	// H komponenta se deli na 2 opsega  (jer je crvena u  0 i 179)
-
-	if(pixel.val[0] < threshold) // 179-th+pval ... 179  AND   0 ... pval
-	{
-		hl1 = 179 - threshold + pixel.val[0];
-		hh1 = 179;
-
-		hl2 = 0;
-		hh2 = pixel.val[0];
-	}
-	else if(pixel.val[0] > 179 - threshold) // pval ... 179  AND  0 ... pval+th-179
-	{
-		hl1 = pixel.val[0];
-		hh1 = 179;
-
-		hl2 = 0;
-		hh2 = pixel.val[0] + threshold - 179;
-	}
-	else // pval-th ... pval+th
-	{
-		hl1 = pixel.val[0] - threshold;
-		hh1 = pixel.val[0] + threshold;
-
-		hl2 = pixel.val[0] - threshold;
-		hh2 = pixel.val[0] + threshold;
-	}
-
-	// S i V komponente mogu samo da se zakucaju na min/max
-	sl = (pixel.val[1] >= threshold) ? (pixel.val[1] - threshold) : 0;
-	sh = (pixel.val[1] <= (255-threshold)) ? (pixel.val[1] + threshold) : 255;
-
-	vl = (pixel.val[2] >= threshold) ? (pixel.val[2] - threshold) : 0;
-	vh = (pixel.val[2] <= (255-threshold)) ? (pixel.val[2] + threshold) : 255;
-*/
-
-/*
-cout << "1" << *maskHSV.ptr<uchar>(0) << "2"  << endl;
-
-
-imshow(to_string(j)+"OVAJ KURAC", maskHSV);
-for(int r=0; r<maskHSV.rows; r++)
-{
-	for(int c=0; c<maskHSV.cols; c++)
-	{
-		if(*maskHSV.ptr<uchar>(r*maskHSV.rows + c) != 0)
-		{
-			cout << *maskHSV.ptr<uchar>(r*maskHSV.rows + c);
-			//signColored.at<Scalar>(r, c) = ColorsBGR[j];
-			//cout << j << " " << (uchar)maskHSV.at<uchar>(r, c) << "       " << r << " - " << c << " "  << ColorsBGR[j] << endl;
-			//signColored.at<Vec3b>(r,c) = Scalar(ColorsBGR[j][0], ColorsBGR[j][1], ColorsBGR[j][2]);
-
-			// uklopi jednu po jednu boju u kopiju kropovane slike
-
-		}
-	}
-}
-//cout << ColorsBGR[j] << endl;
-*/
